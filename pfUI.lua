@@ -222,7 +222,8 @@ function pfUI:UpdateFonts()
   InvoiceTextFontSmall:SetFont(default, 12)
   CombatTextFont:SetFont(combat, 25)
   local chatshadow = pfUI_config.chat.text.outline == "1"
-  ChatFontNormal:SetFont(default, 13, chatshadow and "OUTLINE" or nil)
+  local _, chatsize = ChatFontNormal:GetFont()
+  ChatFontNormal:SetFont(default, chatsize or 13)
   if ChatFontNormal.SetShadowColor and ChatFontNormal.SetShadowOffset then
     ChatFontNormal:SetShadowColor(0, 0, 0, chatshadow and 1 or 0)
     ChatFontNormal:SetShadowOffset(chatshadow and 1 or 0, chatshadow and -1 or 0)
