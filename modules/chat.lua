@@ -298,7 +298,7 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
     end
   end
 
-  local function ApplyChatTextStyle(frame)
+  local function ApplyChatTextStyle(frame, sizeOverride)
     local enabled = C.chat.text.outline == "1"
     local style = C.chat.text.fontstyle ~= "NONE" and C.chat.text.fontstyle or nil
 
@@ -308,10 +308,11 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
     end
 
     if frame.SetFont and frame.GetID then
-      local font = frame.GetFont and frame:GetFont()
-      local _, size = GetChatWindowInfo(frame:GetID())
+      local font, liveSize = frame.GetFont and frame:GetFont()
+      local _, savedSize = GetChatWindowInfo(frame:GetID())
+      local size = tonumber(sizeOverride) or tonumber(liveSize) or tonumber(savedSize)
       if tonumber(size) then
-        frame:SetFont(font or pfUI.font_default, tonumber(size), style)
+        frame:SetFont(font or pfUI.font_default, size, style)
       end
     end
   end
@@ -474,6 +475,15 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
   end
 
   hooksecurefunc("FCF_SaveDock", pfUI.chat.RefreshChat)
+  local HookFCF_SetChatWindowFontSize = FCF_SetChatWindowFontSize
+  _G.FCF_SetChatWindowFontSize = function(frame, size)
+    HookFCF_SetChatWindowFontSize(frame, size)
+    ApplyChatTextStyle(frame, size)
+
+    if frame and frame.GetID and SetChatWindowSize and tonumber(size) then
+      SetChatWindowSize(frame:GetID(), tonumber(size))
+    end
+  end
 
   if C.chat.global.tabmouse == "1" then
     pfUI.chat.mouseovertab = CreateFrame("Frame")
