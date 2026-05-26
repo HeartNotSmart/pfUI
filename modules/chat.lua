@@ -313,7 +313,6 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
   end
 
   function pfUI.chat:UpdateConfig()
-    pfUI:UpdateFonts()
     pfUI.chat:RefreshChat()
   end
 
