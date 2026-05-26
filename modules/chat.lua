@@ -303,7 +303,7 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
 
     if frame.SetShadowColor and frame.SetShadowOffset then
       frame:SetShadowColor(0, 0, 0, enabled and 1 or 0)
-      frame:SetShadowOffset(enabled and 1 or 0, enabled and -1 or 0)
+      frame:SetShadowOffset(enabled and 1.5 or 0, enabled and -1.5 or 0)
     end
   end
 

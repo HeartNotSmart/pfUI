@@ -226,7 +226,7 @@ function pfUI:UpdateFonts()
   ChatFontNormal:SetFont(default, chatsize or 13)
   if ChatFontNormal.SetShadowColor and ChatFontNormal.SetShadowOffset then
     ChatFontNormal:SetShadowColor(0, 0, 0, chatshadow and 1 or 0)
-    ChatFontNormal:SetShadowOffset(chatshadow and 1 or 0, chatshadow and -1 or 0)
+    ChatFontNormal:SetShadowOffset(chatshadow and 1.5 or 0, chatshadow and -1.5 or 0)
   end
 
   if TextStatusBarTextSmall then -- does not exist in koKR
