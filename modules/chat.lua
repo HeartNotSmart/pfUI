@@ -300,10 +300,19 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
 
   local function ApplyChatTextStyle(frame)
     local enabled = C.chat.text.outline == "1"
+    local style = C.chat.text.fontstyle ~= "NONE" and C.chat.text.fontstyle or nil
 
     if frame.SetShadowColor and frame.SetShadowOffset then
       frame:SetShadowColor(0, 0, 0, enabled and 1 or 0)
       frame:SetShadowOffset(enabled and 1.5 or 0, enabled and -1.5 or 0)
+    end
+
+    if frame.SetFont and frame.GetID then
+      local font = frame.GetFont and frame:GetFont()
+      local _, size = GetChatWindowInfo(frame:GetID())
+      if tonumber(size) then
+        frame:SetFont(font or pfUI.font_default, tonumber(size), style)
+      end
     end
   end
 
