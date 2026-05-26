@@ -298,6 +298,25 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
     end
   end
 
+  local function ApplyChatTextStyle(frame)
+    local font, size = frame.GetFont and frame:GetFont()
+    local enabled = C.chat.text.outline == "1"
+
+    if frame.SetFont then
+      frame:SetFont(font or pfUI.font_default, size or 13, enabled and "OUTLINE" or nil)
+    end
+
+    if frame.SetShadowColor and frame.SetShadowOffset then
+      frame:SetShadowColor(0, 0, 0, enabled and 1 or 0)
+      frame:SetShadowOffset(enabled and 1 or 0, enabled and -1 or 0)
+    end
+  end
+
+  function pfUI.chat:UpdateConfig()
+    pfUI:UpdateFonts()
+    pfUI.chat:RefreshChat()
+  end
+
   function pfUI.chat:RefreshChat()
     local panelheight = C.global.font_size*1.5 + default_border*2 + 2
 
@@ -441,6 +460,7 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
 
       frame:EnableMouseWheel(true)
       frame:SetScript("OnMouseWheel", ChatOnMouseWheel)
+      ApplyChatTextStyle(frame)
     end
 
 
