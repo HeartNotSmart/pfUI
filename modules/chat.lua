@@ -299,6 +299,8 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
   end
 
   local function ApplyChatTextStyle(frame, sizeOverride)
+    if not frame then return end
+
     local enabled = C.chat.text.outline == "1"
     local style = C.chat.text.fontstyle ~= "NONE" and C.chat.text.fontstyle or nil
 
@@ -477,11 +479,23 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
   hooksecurefunc("FCF_SaveDock", pfUI.chat.RefreshChat)
   local HookFCF_SetChatWindowFontSize = FCF_SetChatWindowFontSize
   _G.FCF_SetChatWindowFontSize = function(frame, size)
-    HookFCF_SetChatWindowFontSize(frame, size)
-    ApplyChatTextStyle(frame, size)
+    local chatframe = frame
+    local fontsize = size
 
-    if frame and frame.GetID and SetChatWindowSize and tonumber(size) then
-      SetChatWindowSize(frame:GetID(), tonumber(size))
+    if type(chatframe) == "number" then
+      fontsize = chatframe
+      chatframe = nil
+    end
+
+    HookFCF_SetChatWindowFontSize(chatframe, fontsize)
+
+    chatframe = chatframe or SELECTED_CHAT_FRAME
+    fontsize = tonumber(fontsize) or tonumber(UIDROPDOWNMENU_MENU_VALUE) or tonumber(this and this.value)
+
+    ApplyChatTextStyle(chatframe, fontsize)
+
+    if chatframe and chatframe.GetID and SetChatWindowSize and fontsize then
+      SetChatWindowSize(chatframe:GetID(), fontsize)
     end
   end
 
