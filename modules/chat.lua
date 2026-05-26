@@ -492,11 +492,11 @@ pfUI:RegisterModule("chat", "vanilla:tbc", function ()
     chatframe = chatframe or SELECTED_CHAT_FRAME
     fontsize = tonumber(fontsize) or tonumber(UIDROPDOWNMENU_MENU_VALUE) or tonumber(this and this.value)
 
-    ApplyChatTextStyle(chatframe, fontsize)
-
     if chatframe and chatframe.GetID and SetChatWindowSize and fontsize then
       SetChatWindowSize(chatframe:GetID(), fontsize)
     end
+
+    ApplyChatTextStyle(chatframe, fontsize)
   end
 
   if C.chat.global.tabmouse == "1" then
