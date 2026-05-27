@@ -96,16 +96,17 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
   end
 
   local function GetVerticalActionBarDodgeOffset(margin)
+    local offset = -default_border*2
     local bar = _G.pfActionBarVertical
     if not bar or not C.bars or not C.bars.bar4 or C.bars.bar4.enable ~= "1" then
-      return 0
+      return offset
     end
 
     if not bar:IsShown() or (bar.GetAlpha and bar:GetAlpha() <= .05) then
-      return 0
+      return offset
     end
 
-    return -((bar:GetWidth() or 0) + (margin or 0) + default_border*2)
+    return offset - ((bar:GetWidth() or 0) + (margin or 0))
   end
 
   pfUI.tooltip:SetAllPoints()
