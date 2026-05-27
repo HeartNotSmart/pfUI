@@ -105,8 +105,7 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
       return 0
     end
 
-    local spacing = tonumber(C.bars.bar4.spacing) or 0
-    return -((bar:GetWidth() or 0) + (margin or 0) + spacing)
+    return -((bar:GetWidth() or 0) + (margin or 0))
   end
 
   pfUI.tooltip:SetAllPoints()
