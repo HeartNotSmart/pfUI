@@ -95,6 +95,26 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
     table.insert(pfUI.tooltip.dodge, "pfBag")
   end
 
+  local function GetVerticalActionBarOffset(anchor, default_x, margin)
+    local bar = _G.pfActionBarVertical
+    if not bar or not C.bars or not C.bars.bar4 or C.bars.bar4.enable ~= "1" then
+      return default_x
+    end
+
+    if not bar:IsShown() or (bar.GetAlpha and bar:GetAlpha() <= .05) then
+      return default_x
+    end
+
+    local bar_left = bar:GetLeft()
+    local anchor_right = anchor and anchor:GetRight() or UIParent:GetRight()
+    if not bar_left or not anchor_right then
+      return default_x
+    end
+
+    local offset = bar_left - margin - anchor_right
+    return offset < default_x and offset or default_x
+  end
+
   pfUI.tooltip:SetAllPoints()
   pfUI.tooltip:SetScript("OnShow", function()
       pfUI.tooltip:Update()
@@ -116,9 +136,13 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
           end
 
           if anchor then
-            GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", 0, default_border*3)
+            local margin = default_border*3
+            local offset = GetVerticalActionBarOffset(anchor, 0, margin)
+            GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", offset, margin)
           else
-            GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -5, 5)
+            local margin = default_border*3
+            local offset = GetVerticalActionBarOffset(nil, -5, margin)
+            GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", offset, 5)
           end
         elseif C.tooltip.position == "free" then
           local point = this:GetAnchorPoint()
