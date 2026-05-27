@@ -103,7 +103,7 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
 
     local _, _, cols, rows = string.find(tostring(C.bars.bar4.formfactor or ""), "(%d+)%s*x%s*(%d+)")
     cols, rows = tonumber(cols), tonumber(rows)
-    if not cols or not rows or cols > 3 or (cols == 3 and rows == 3) then
+    if not cols or not rows or cols > 3 then
       return default_x
     end
 
@@ -111,19 +111,18 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
       return default_x
     end
 
+    local size = tonumber(C.bars.bar4.icon_size) or 20
+    local spacing = tonumber(C.bars.bar4.spacing) or 1
+    local _, border = GetBorderSize("actionbars")
+    local step = size + border*2 + spacing
+    local bar_width = step * cols + spacing
+    local bar_right = bar:GetRight()
     local bar_left
+
     if C.bars.bar4.background == "1" and bar.backdrop and bar.backdrop:IsShown() then
-      bar_left = bar.backdrop:GetLeft()
+      bar_left = bar_right and bar_right - bar_width - border
     else
-      for i = 1, 12 do
-        local button = bar[i]
-        if button and button:IsShown() and (not button.GetAlpha or button:GetAlpha() > .05) then
-          local left = button.backdrop and button.backdrop:IsShown() and button.backdrop:GetLeft() or button:GetLeft()
-          if left and (not bar_left or left < bar_left) then
-            bar_left = left
-          end
-        end
-      end
+      bar_left = bar_right and bar_right - (step * cols - spacing)
     end
 
     local anchor_right = anchor and anchor:GetRight() or UIParent:GetRight()
