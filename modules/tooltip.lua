@@ -95,6 +95,19 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
     table.insert(pfUI.tooltip.dodge, "pfBag")
   end
 
+  local function GetVerticalActionBarDodgeOffset()
+    local bar = _G.pfActionBarVertical
+    if not bar or not C.bars or not C.bars.bar4 or C.bars.bar4.enable ~= "1" then
+      return 0
+    end
+
+    if not bar:IsShown() or (bar.GetAlpha and bar:GetAlpha() <= .05) then
+      return 0
+    end
+
+    return -(bar:GetWidth() or 0)
+  end
+
   pfUI.tooltip:SetAllPoints()
   pfUI.tooltip:SetScript("OnShow", function()
       pfUI.tooltip:Update()
@@ -116,9 +129,9 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
           end
 
           if anchor then
-            GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", 0, default_border*3)
+            GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", GetVerticalActionBarDodgeOffset(), default_border*3)
           else
-            GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -5, 5)
+            GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -5 + GetVerticalActionBarDodgeOffset(), 5)
           end
         elseif C.tooltip.position == "free" then
           local point = this:GetAnchorPoint()
