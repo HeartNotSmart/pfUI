@@ -95,7 +95,7 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
     table.insert(pfUI.tooltip.dodge, "pfBag")
   end
 
-  local function GetVerticalActionBarDodgeOffset()
+  local function GetVerticalActionBarDodgeOffset(margin)
     local bar = _G.pfActionBarVertical
     if not bar or not C.bars or not C.bars.bar4 or C.bars.bar4.enable ~= "1" then
       return 0
@@ -105,7 +105,8 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
       return 0
     end
 
-    return -(bar:GetWidth() or 0)
+    local spacing = tonumber(C.bars.bar4.spacing) or 0
+    return -((bar:GetWidth() or 0) + (margin or 0) + spacing)
   end
 
   pfUI.tooltip:SetAllPoints()
@@ -129,9 +130,11 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
           end
 
           if anchor then
-            GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", GetVerticalActionBarDodgeOffset(), default_border*3)
+            local margin = default_border*3
+            GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", GetVerticalActionBarDodgeOffset(margin), margin)
           else
-            GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -5 + GetVerticalActionBarDodgeOffset(), 5)
+            local margin = default_border*3
+            GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -5 + GetVerticalActionBarDodgeOffset(margin), 5)
           end
         elseif C.tooltip.position == "free" then
           local point = this:GetAnchorPoint()
