@@ -101,11 +101,31 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
       return default_x
     end
 
+    local _, _, cols, rows = string.find(tostring(C.bars.bar4.formfactor or ""), "(%d+)%s*x%s*(%d+)")
+    cols, rows = tonumber(cols), tonumber(rows)
+    if not cols or not rows or cols > 3 or (cols == 3 and rows == 3) then
+      return default_x
+    end
+
     if not bar:IsShown() or (bar.GetAlpha and bar:GetAlpha() <= .05) then
       return default_x
     end
 
-    local bar_left = bar:GetLeft()
+    local bar_left
+    if C.bars.bar4.background == "1" and bar.backdrop and bar.backdrop:IsShown() then
+      bar_left = bar.backdrop:GetLeft()
+    else
+      for i = 1, 12 do
+        local button = bar[i]
+        if button and button:IsShown() and (not button.GetAlpha or button:GetAlpha() > .05) then
+          local left = button.backdrop and button.backdrop:IsShown() and button.backdrop:GetLeft() or button:GetLeft()
+          if left and (not bar_left or left < bar_left) then
+            bar_left = left
+          end
+        end
+      end
+    end
+
     local anchor_right = anchor and anchor:GetRight() or UIParent:GetRight()
     if not bar_left or not anchor_right then
       return default_x
