@@ -105,6 +105,25 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
       return 0
     end
 
+    if C.bars.bar4.background == "1" and bar.backdrop and bar.backdrop:IsShown() then
+      return -(bar.backdrop:GetWidth() or bar:GetWidth() or 0)
+    end
+
+    local left, right
+    for i = 1, 12 do
+      local button = bar[i]
+      if button and button:IsShown() and (not button.GetAlpha or button:GetAlpha() > .05) then
+        local frame = button.backdrop and button.backdrop:IsShown() and button.backdrop or button
+        local frame_left, frame_right = frame:GetLeft(), frame:GetRight()
+        if frame_left and (not left or frame_left < left) then left = frame_left end
+        if frame_right and (not right or frame_right > right) then right = frame_right end
+      end
+    end
+
+    if left and right then
+      return -(right - left)
+    end
+
     return -(bar:GetWidth() or 0)
   end
 
