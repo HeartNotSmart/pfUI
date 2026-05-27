@@ -105,7 +105,7 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
       return 0
     end
 
-    return -((bar:GetWidth() or 0) + (margin or 0))
+    return -((bar:GetWidth() or 0) + (margin or 0)*2)
   end
 
   pfUI.tooltip:SetAllPoints()
