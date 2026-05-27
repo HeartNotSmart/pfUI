@@ -95,76 +95,9 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
     table.insert(pfUI.tooltip.dodge, "pfBag")
   end
 
-  pfUI.tooltip.dodgeanchor = CreateFrame("Frame", "pfTooltipDodgeAnchor", UIParent)
-  pfUI.tooltip.dodgeanchor:SetWidth(1)
-  pfUI.tooltip.dodgeanchor:SetHeight(1)
-  pfUI.tooltip.dodgeanchor:Hide()
-
-  local tooltipDodgeDebugLast, tooltipDodgeDebugTick
-  local function DebugTooltipDodge(msg)
-    if not DEFAULT_CHAT_FRAME then return end
-    if tooltipDodgeDebugLast == msg and (tooltipDodgeDebugTick or 0) > GetTime() then return end
-    tooltipDodgeDebugLast = msg
-    tooltipDodgeDebugTick = GetTime() + 1
-    DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccpfUI tooltip dodge:|r " .. msg)
-  end
-
-  local function GetVerticalActionBarRight(margin)
-    local bar = _G.pfActionBarVertical
-    if not bar or not C.bars or not C.bars.bar4 or C.bars.bar4.enable ~= "1" then
-      DebugTooltipDodge("skip vertical bar: missing frame or bar4 disabled")
-      return nil
-    end
-
-    local _, _, cols, rows = string.find(tostring(C.bars.bar4.formfactor or ""), "(%d+)%s*x%s*(%d+)")
-    cols, rows = tonumber(cols), tonumber(rows)
-    if not cols or not rows or cols > 3 then
-      DebugTooltipDodge("skip vertical bar: formfactor=" .. tostring(C.bars.bar4.formfactor))
-      return nil
-    end
-
-    if not bar:IsShown() or (bar.GetAlpha and bar:GetAlpha() <= .05) then
-      DebugTooltipDodge("skip vertical bar: shown=" .. tostring(bar:IsShown()) .. " alpha=" .. tostring(bar.GetAlpha and bar:GetAlpha()))
-      return nil
-    end
-
-    local size = tonumber(C.bars.bar4.icon_size) or 20
-    local spacing = tonumber(C.bars.bar4.spacing) or 1
-    local _, border = GetBorderSize("actionbars")
-    local bar_width = size * cols + spacing * (cols - 1)
-    local bar_right = bar:GetRight()
-    local bar_left
-
-    if C.bars.bar4.background == "1" and bar.backdrop and bar.backdrop:IsShown() then
-      bar_left = bar_right and bar_right - bar_width - border*2
-    else
-      bar_left = bar_right and bar_right - bar_width
-    end
-
-    if not bar_left then
-      DebugTooltipDodge("skip vertical bar: no bar_left; right=" .. tostring(bar_right))
-      return nil
-    end
-
-    DebugTooltipDodge(
-      "hit vertical bar: formfactor=" .. tostring(C.bars.bar4.formfactor) ..
-      " cols=" .. tostring(cols) ..
-      " size=" .. tostring(size) ..
-      " spacing=" .. tostring(spacing) ..
-      " border=" .. tostring(border) ..
-      " bar_right=" .. tostring(round(bar_right or 0, 1)) ..
-      " bar_left=" .. tostring(round(bar_left or 0, 1)) ..
-      " tooltip_right=" .. tostring(round(bar_left - margin, 1))
-    )
-    return bar_left - margin
-  end
-
   pfUI.tooltip:SetAllPoints()
   pfUI.tooltip:SetScript("OnShow", function()
       pfUI.tooltip:Update()
-      if C.tooltip.position == "chat" then
-        DebugTooltipDodge("OnShow anchorType=" .. tostring(GameTooltip:GetAnchorType()))
-      end
       if GameTooltip:GetAnchorType() == "ANCHOR_NONE" then
         GameTooltip:ClearAllPoints()
         if C.tooltip.position == "bottom" then
@@ -183,28 +116,9 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
           end
 
           if anchor then
-            local margin = default_border*3
-            local right = GetVerticalActionBarRight(margin)
-            local bottom = anchor:GetTop() and anchor:GetTop() + margin
-            if right and bottom then
-              pfUI.tooltip.dodgeanchor:ClearAllPoints()
-              pfUI.tooltip.dodgeanchor:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", right, bottom)
-              pfUI.tooltip.dodgeanchor:Show()
-              GameTooltip:SetPoint("BOTTOMRIGHT", pfUI.tooltip.dodgeanchor, "BOTTOMRIGHT", 0, 0)
-            else
-              GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", 0, margin)
-            end
+            GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", 0, default_border*3)
           else
-            local margin = default_border*3
-            local right = GetVerticalActionBarRight(margin)
-            if right then
-              pfUI.tooltip.dodgeanchor:ClearAllPoints()
-              pfUI.tooltip.dodgeanchor:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", right, 5)
-              pfUI.tooltip.dodgeanchor:Show()
-              GameTooltip:SetPoint("BOTTOMRIGHT", pfUI.tooltip.dodgeanchor, "BOTTOMRIGHT", 0, 0)
-            else
-              GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -5, 5)
-            end
+            GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -5, 5)
           end
         elseif C.tooltip.position == "free" then
           local point = this:GetAnchorPoint()
