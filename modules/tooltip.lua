@@ -131,15 +131,14 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
     local size = tonumber(C.bars.bar4.icon_size) or 20
     local spacing = tonumber(C.bars.bar4.spacing) or 1
     local _, border = GetBorderSize("actionbars")
-    local step = size + border*2 + spacing
-    local bar_width = step * cols + spacing
+    local bar_width = size * cols + spacing * (cols - 1)
     local bar_right = bar:GetRight()
     local bar_left
 
     if C.bars.bar4.background == "1" and bar.backdrop and bar.backdrop:IsShown() then
-      bar_left = bar_right and bar_right - bar_width - border
+      bar_left = bar_right and bar_right - bar_width - border*2
     else
-      bar_left = bar_right and bar_right - (step * cols - spacing)
+      bar_left = bar_right and bar_right - bar_width
     end
 
     if not bar_left then
