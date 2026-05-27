@@ -130,8 +130,7 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
       return default_x
     end
 
-    local offset = bar_left - margin - anchor_right
-    return offset < default_x and offset or default_x
+    return bar_left - margin - anchor_right
   end
 
   pfUI.tooltip:SetAllPoints()
