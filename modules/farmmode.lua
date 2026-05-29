@@ -19,10 +19,13 @@ pfUI:RegisterModule("farmmode", "vanilla:tbc", function ()
   end
 
   local function UpdateMinimap()
+    local zoom = Minimap:GetZoom()
+
     -- haven't found anything better to
     -- force update the map textures
     Minimap_ZoomIn()
     Minimap_ZoomOut()
+    Minimap:SetZoom(zoom)
   end
 
   _G.SLASH_PFFARMMAP1, _G.SLASH_PFFARMMAP2 = "/farm", "/farmmode"
@@ -44,8 +47,10 @@ pfUI:RegisterModule("farmmode", "vanilla:tbc", function ()
     if IsControlKeyDown() then
       this:SetWidth(this:GetWidth() + (arg1 > 0 and 10 or -10))
       this:SetHeight(this:GetHeight() + (arg1 > 0 and 10 or -10))
+      local zoom = Minimap:GetZoom()
       Minimap_ZoomIn()
       Minimap_ZoomOut()
+      Minimap:SetZoom(zoom)
     elseif IsShiftKeyDown() then
       this:SetAlpha(this:GetAlpha() + (arg1 > 0 and 0.1 or (this:GetAlpha() > 0.1 and -0.1 or 0)))
       SaveMovable(this)

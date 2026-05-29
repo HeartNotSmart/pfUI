@@ -30,6 +30,69 @@ pfUI:RegisterModule("minimap", "vanilla:tbc", function ()
     if(arg1 > 0) then Minimap_ZoomIn() else Minimap_ZoomOut() end
   end)
 
+  do
+    local function ZoomDebugMessage(msg)
+      DEFAULT_CHAT_FRAME:AddMessage("|cff33ffccpf|rUI Zoom: " .. msg)
+    end
+
+    local debug = CreateFrame("Frame")
+    debug.enabled = nil
+    debug.lastzoom = Minimap:GetZoom()
+    debug:SetScript("OnUpdate", function()
+      if not this.enabled then return end
+      if (this.tick or 0) > GetTime() then return end
+      this.tick = GetTime() + .05
+
+      local zoom = Minimap:GetZoom()
+      if zoom ~= this.lastzoom then
+        ZoomDebugMessage("changed " .. (this.lastzoom or "nil") .. " -> " .. zoom .. " (poll)")
+        this.lastzoom = zoom
+      end
+    end)
+
+    debug:RegisterEvent("MINIMAP_UPDATE_ZOOM")
+    debug:RegisterEvent("MINIMAP_ZONE_CHANGED")
+    debug:RegisterEvent("ZONE_CHANGED")
+    debug:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+    debug:RegisterEvent("PLAYER_ENTERING_WORLD")
+    debug:SetScript("OnEvent", function()
+      if not this.enabled then return end
+      ZoomDebugMessage(event .. " zoom=" .. Minimap:GetZoom())
+      this.lastzoom = Minimap:GetZoom()
+    end)
+
+    local OrigMinimapSetZoom = Minimap.SetZoom
+    Minimap.SetZoom = function(self, zoom)
+      if debug.enabled then
+        ZoomDebugMessage("Minimap:SetZoom(" .. (zoom or "nil") .. ")")
+        if debugstack then
+          ZoomDebugMessage(debugstack())
+        end
+      end
+
+      return OrigMinimapSetZoom(self, zoom)
+    end
+
+    local OrigMinimapZoomIn = Minimap_ZoomIn
+    Minimap_ZoomIn = function()
+      if debug.enabled then ZoomDebugMessage("Minimap_ZoomIn()") end
+      return OrigMinimapZoomIn()
+    end
+
+    local OrigMinimapZoomOut = Minimap_ZoomOut
+    Minimap_ZoomOut = function()
+      if debug.enabled then ZoomDebugMessage("Minimap_ZoomOut()") end
+      return OrigMinimapZoomOut()
+    end
+
+    _G.SLASH_PFZOOMDEBUG1 = "/pfzoomdebug"
+    _G.SlashCmdList.PFZOOMDEBUG = function()
+      debug.enabled = not debug.enabled
+      debug.lastzoom = Minimap:GetZoom()
+      ZoomDebugMessage(debug.enabled and ("enabled, zoom=" .. debug.lastzoom) or "disabled")
+    end
+  end
+
   pfUI.minimap.UpdateConfig = function(self)
     size = tonumber(C.appearance.minimap.size) or 140
 
