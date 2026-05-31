@@ -95,16 +95,23 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
     table.insert(pfUI.tooltip.dodge, "pfBag")
   end
 
-  local function GetVerticalActionBarDodgeOffset(margin)
-    local offset = -default_border*2
+  local function IsVerticalActionBarVisible()
     local bar = _G.pfActionBarVertical
     if not bar or not C.bars or not C.bars.bar4 or C.bars.bar4.enable ~= "1" then
-      return offset
+      return nil
     end
 
     if not bar:IsShown() or (bar.GetAlpha and bar:GetAlpha() <= .05) then
-      return offset
+      return nil
     end
+
+    return true
+  end
+
+  local function GetVerticalActionBarDodgeOffset(margin)
+    local offset = -default_border*2
+    local bar = _G.pfActionBarVertical
+    if not IsVerticalActionBarVisible() then return offset end
 
     return offset - ((bar:GetWidth() or 0) + (margin or 0))
   end
@@ -131,7 +138,11 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
 
           if anchor then
             local margin = default_border*3
-            GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", GetVerticalActionBarDodgeOffset(margin), margin)
+            if anchor == _G.pfBag and IsVerticalActionBarVisible() then
+              GameTooltip:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, margin)
+            else
+              GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", GetVerticalActionBarDodgeOffset(margin), margin)
+            end
           else
             local margin = default_border*3
             GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -5 + GetVerticalActionBarDodgeOffset(margin), 5)
