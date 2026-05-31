@@ -121,8 +121,39 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
     local frame = bags and bags.uiFrame or _G.BagshuiBagsFrame
 
     if frame and frame.IsShown and frame:IsShown() then
-      return frame
+      return frame, bags
     end
+  end
+
+  local function GetBagShuiWidestRow(bags)
+    local rows, widest = {}, 0
+    local groups = bags and bags.ui and bags.ui.frames and bags.ui.frames.groups
+    local groupWidths = bags and bags.groupWidthsInItems
+
+    if groups and groupWidths then
+      for _, group in ipairs(groups) do
+        if group and group.IsShown and group:IsShown() and group.bagshuiData then
+          local groupId = group.bagshuiData.groupId
+          local width = groupId and groupWidths[groupId]
+          local top = group.GetTop and group:GetTop()
+
+          if top and width and width > 0 then
+            local row = floor(top + .5)
+            rows[row] = (rows[row] or 0) + width
+            if rows[row] > widest then widest = rows[row] end
+          end
+        end
+      end
+    end
+
+    return widest
+  end
+
+  local function UseBagShuiNarrowRowAnchor(bags)
+    local maxColumns = bags and bags.settings and tonumber(bags.settings.windowMaxColumns)
+    local widest = GetBagShuiWidestRow(bags)
+
+    return maxColumns and maxColumns > 0 and widest > 0 and widest < maxColumns * .7
   end
 
   pfUI.tooltip:SetAllPoints()
@@ -138,7 +169,7 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
           end
         elseif C.tooltip.position == "chat" then
           local anchor = nil
-          local bagshui = GetBagShuiBagFrame()
+          local bagshui, bagshuiBags = GetBagShuiBagFrame()
 
           for _, frame in pairs(pfUI.tooltip.dodge) do
             if _G[frame] and _G[frame]:IsShown() then
@@ -150,7 +181,10 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
 
           if anchor then
             local margin = default_border*3
-            if (anchor == _G.pfBag or anchor == bagshui) and IsVerticalActionBarVisible() then
+            local verticalActionBarVisible = IsVerticalActionBarVisible()
+            if anchor == bagshui and verticalActionBarVisible and UseBagShuiNarrowRowAnchor(bagshuiBags) then
+              GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPLEFT", 0, margin)
+            elseif (anchor == _G.pfBag or anchor == bagshui) and verticalActionBarVisible then
               GameTooltip:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, margin)
             else
               GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", GetVerticalActionBarDodgeOffset(margin), margin)
