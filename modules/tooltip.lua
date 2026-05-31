@@ -116,6 +116,15 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
     return offset - ((bar:GetWidth() or 0) + (margin or 0))
   end
 
+  local function GetBagShuiBagFrame()
+    local bags = _G.Bagshui and _G.Bagshui.components and _G.Bagshui.components.Bags
+    local frame = bags and bags.uiFrame or _G.BagshuiBagsFrame
+
+    if frame and frame.IsShown and frame:IsShown() then
+      return frame
+    end
+  end
+
   pfUI.tooltip:SetAllPoints()
   pfUI.tooltip:SetScript("OnShow", function()
       pfUI.tooltip:Update()
@@ -129,6 +138,7 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
           end
         elseif C.tooltip.position == "chat" then
           local anchor = nil
+          local bagshui = GetBagShuiBagFrame()
 
           for _, frame in pairs(pfUI.tooltip.dodge) do
             if _G[frame] and _G[frame]:IsShown() then
@@ -136,9 +146,11 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
             end
           end
 
+          anchor = bagshui or anchor
+
           if anchor then
             local margin = default_border*3
-            if anchor == _G.pfBag and IsVerticalActionBarVisible() then
+            if (anchor == _G.pfBag or anchor == bagshui) and IsVerticalActionBarVisible() then
               GameTooltip:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, margin)
             else
               GameTooltip:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", GetVerticalActionBarDodgeOffset(margin), margin)
