@@ -3123,6 +3123,9 @@ local function abbrevname(t)
   return string.sub(t,1,1)..". "
 end
 
+local NAME_WRAP_MAX_LINES = 3
+local NAME_WRAP_MIN_FONT_SIZE = 8
+
 local function StripWoWTranslateNameText(text)
   if not text then return nil end
 
@@ -3182,16 +3185,55 @@ function pfUI.uf:CacheWoWTranslateTooltipName(tooltip)
   return translatedName
 end
 
-local function WrapNameString(name, unit)
-  if not name or not unit then return name end
+local function GetStatusTextFrame(unit, pos)
+  if not unit or not pos then return nil end
 
-  local barWidth = unit.hp and unit.hp.bar and unit.hp.bar:GetWidth()
-  if not barWidth or barWidth <= 0 then
-    barWidth = tonumber(unit.config and unit.config.width)
+  if pos == "hpleft" then
+    return unit.hpLeftText
+  elseif pos == "hpcenter" then
+    return unit.hpCenterText
+  elseif pos == "hpright" then
+    return unit.hpRightText
+  elseif pos == "powerleft" then
+    return unit.powerLeftText
+  elseif pos == "powercenter" then
+    return unit.powerCenterText
+  elseif pos == "powerright" then
+    return unit.powerRightText
+  end
+end
+
+local function GetStatusTextFont(unit)
+  if unit and unit.config and unit.config.customfont == "1" then
+    return pfUI.media[unit.config.customfont_name], tonumber(unit.config.customfont_size), unit.config.customfont_style
   end
 
-  local limit = barWidth and floor(barWidth / 10)
-  if not limit or limit < 1 or strlen(name) <= limit then return name end
+  return pfUI.font_unit, tonumber(C.global.font_unit_size), C.global.font_unit_style
+end
+
+local function SetStatusTextFont(unit, frame, shrink)
+  if not frame or not frame.SetFont then return end
+
+  local fontname, fontsize, fontstyle = GetStatusTextFont(unit)
+  if not fontname or not fontsize then return end
+
+  local size = fontsize - (shrink or 0) * 2
+  if size < NAME_WRAP_MIN_FONT_SIZE then size = NAME_WRAP_MIN_FONT_SIZE end
+
+  if frame.pfUINameFontName == fontname
+    and frame.pfUINameFontSize == size
+    and frame.pfUINameFontStyle == fontstyle then
+    return
+  end
+
+  frame:SetFont(fontname, size, fontstyle)
+  frame.pfUINameFontName = fontname
+  frame.pfUINameFontSize = size
+  frame.pfUINameFontStyle = fontstyle
+end
+
+local function WrapNameWords(name, limit)
+  if not limit or limit < 1 or strlen(name) <= limit then return name, 1 end
 
   local lines = {}
   local line = ""
@@ -3212,13 +3254,42 @@ local function WrapNameString(name, unit)
   end
 
   if table.getn(lines) > 0 then
-    return table.concat(lines, "\n")
+    return table.concat(lines, "\n"), table.getn(lines)
   end
 
-  return name
+  return name, 1
 end
 
-function pfUI.uf:GetNameString(unitstr, unit)
+local function WrapNameString(name, unit)
+  if not name or not unit then return name, 0 end
+
+  local barWidth = unit.hp and unit.hp.bar and unit.hp.bar:GetWidth()
+  if not barWidth or barWidth <= 0 then
+    barWidth = tonumber(unit.config and unit.config.width)
+  end
+
+  local limit = barWidth and floor(barWidth / 10)
+  if not limit or limit < 1 then return name, 0 end
+
+  local _, fontsize = GetStatusTextFont(unit)
+  local maxShrink = 0
+  if fontsize and fontsize > NAME_WRAP_MIN_FONT_SIZE then
+    maxShrink = floor((fontsize - NAME_WRAP_MIN_FONT_SIZE) / 2)
+  end
+
+  local wrapped = name
+  for shrink = 0, maxShrink do
+    local lines
+    wrapped, lines = WrapNameWords(name, limit + shrink)
+    if lines <= NAME_WRAP_MAX_LINES then
+      return wrapped, shrink
+    end
+  end
+
+  return wrapped, maxShrink
+end
+
+local function GetNameStringAndShrink(unitstr, unit)
   local name = UnitName(unitstr)
   local translatedName = pfUI.uf:GetWoWTranslateName(unitstr)
   if translatedName then
@@ -3239,6 +3310,18 @@ function pfUI.uf:GetNameString(unitstr, unit)
   end
 
   return WrapNameString(name, unit)
+end
+
+function pfUI.uf:GetNameString(unitstr, unit)
+  local name = GetNameStringAndShrink(unitstr, unit)
+  return name
+end
+
+local function GetColoredUnitName(unit, unitstr, frame)
+  local name, shrink = GetNameStringAndShrink(unitstr, unit)
+  SetStatusTextFont(unit, frame, shrink)
+
+  return unit:GetColor("unit") .. name
 end
 
 function pfUI.uf:GetLevelString(unitstr)
@@ -3263,7 +3346,9 @@ function pfUI.uf:GetStatusValue(unit, pos)
   if not pos or not unit then return end
   local config = unit.config["txt"..pos]
   local unitstr = unit.label .. unit.id
-  local frame = unit[pos .. "Text"]
+  local frame = GetStatusTextFrame(unit, pos)
+
+  SetStatusTextFont(unit, frame, 0)
 
   -- as a fallback, draw the name
   if pos == "center" and not config then
@@ -3282,17 +3367,17 @@ function pfUI.uf:GetStatusValue(unit, pos)
   end
 
   if config == "unit" then
-    local name = unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
+    local name = GetColoredUnitName(unit, unitstr, frame)
     local level = unit:GetColor("level") .. pfUI.uf:GetLevelString(unitstr)
 
     return level .. "  " .. name
   elseif config == "unitrev" then
-    local name = unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
+    local name = GetColoredUnitName(unit, unitstr, frame)
     local level = unit:GetColor("level") .. pfUI.uf:GetLevelString(unitstr)
 
     return name .. "  " .. level
   elseif config == "name" then
-    return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
+    return GetColoredUnitName(unit, unitstr, frame)
   elseif config == "nameshort" then
     return unit:GetColor("unit") .. strsub(UnitName(unitstr), 0, 3)
   elseif config == "level" then
@@ -3331,18 +3416,18 @@ function pfUI.uf:GetStatusValue(unit, pos)
     if UnitIsDead(unitstr) then
       return unit:GetColor("health") .. DEAD
     elseif health == 0 then
-      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
+      return GetColoredUnitName(unit, unitstr, frame)
     else
       return unit:GetColor("health") .. pfUI.api.Abbreviate(health)
     end
   elseif config == "namehealthbreak" then
     local health = ceil(rhp - rhpmax)
     if UnitIsDead(unitstr) then
-      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit) .. "\n" .. unit:GetColor("health") .. DEAD
+      return GetColoredUnitName(unit, unitstr, frame) .. "\n" .. unit:GetColor("health") .. DEAD
     elseif health == 0 then
-      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
+      return GetColoredUnitName(unit, unitstr, frame)
     else
-      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit) .. "\n" .. unit:GetColor("health") .. pfUI.api.Abbreviate(-health)
+      return GetColoredUnitName(unit, unitstr, frame) .. "\n" .. unit:GetColor("health") .. pfUI.api.Abbreviate(-health)
     end
   elseif config == "shortnamehealth" then
     local health = ceil(rhp - rhpmax)
