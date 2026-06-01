@@ -13,6 +13,7 @@ end)
 
 pfUI.uf.frames = {}
 pfUI.uf.delayed = {}
+pfUI.uf.wowtranslateNames = {}
 
 -- ============================================================================
 -- GUID-based Roster Tracking for Smart Updates
@@ -3122,8 +3123,108 @@ local function abbrevname(t)
   return string.sub(t,1,1)..". "
 end
 
-function pfUI.uf:GetNameString(unitstr)
+local function StripWoWTranslateNameText(text)
+  if not text then return nil end
+
+  text = string.gsub(text, "|n.*", "")
+  text = string.gsub(text, "|H.-|h(.-)|h", "%1")
+  text = string.gsub(text, "|c%x%x%x%x%x%x%x%x", "")
+  text = string.gsub(text, "|r", "")
+  text = string.gsub(text, "%s*%*$", "")
+  text = string.gsub(text, "^%s*(.-)%s*$", "%1")
+
+  if text == "" or string.sub(text, 1, 1) == "<" then return nil end
+  return text
+end
+
+function pfUI.uf:GetWoWTranslateName(unitstr)
+  if not unitstr or C.unitframes.translate_wowtranslate ~= "1" then return nil end
+
   local name = UnitName(unitstr)
+  if not name or not pfUI.uf.wowtranslateNames then return nil end
+
+  return pfUI.uf.wowtranslateNames[name]
+end
+
+function pfUI.uf:RefreshWoWTranslateName(name)
+  if not name or not pfUI.uf.frames then return end
+
+  for _, frame in pairs(pfUI.uf.frames) do
+    if frame and frame.label and frame.id then
+      local unitstr = frame.label .. frame.id
+      if UnitName(unitstr) == name then
+        pfUI.uf:RefreshUnit(frame, "base")
+      end
+    end
+  end
+end
+
+function pfUI.uf:CacheWoWTranslateTooltipName(tooltip)
+  if C.unitframes.translate_wowtranslate ~= "1" then return nil end
+  if not tooltip or not tooltip.wtAddedNameLine then return nil end
+
+  local rawName = tooltip.wtPlayerName
+  if (not rawName or rawName == "") and tooltip.wtUnit and UnitExists(tooltip.wtUnit) then
+    rawName = UnitName(tooltip.wtUnit)
+  end
+  if not rawName or rawName == "" then return nil end
+
+  local tipName = tooltip.GetName and tooltip:GetName()
+  local line = tipName and getglobal(tipName .. "TextLeft1")
+  local translatedName = line and StripWoWTranslateNameText(line:GetText())
+
+  if not translatedName or translatedName == rawName then return nil end
+  if pfUI.uf.wowtranslateNames[rawName] == translatedName then return translatedName end
+
+  pfUI.uf.wowtranslateNames[rawName] = translatedName
+  pfUI.uf:RefreshWoWTranslateName(rawName)
+
+  return translatedName
+end
+
+local function WrapNameString(name, unit)
+  if not name or not unit then return name end
+
+  local barWidth = unit.hp and unit.hp.bar and unit.hp.bar:GetWidth()
+  if not barWidth or barWidth <= 0 then
+    barWidth = tonumber(unit.config and unit.config.width)
+  end
+
+  local limit = barWidth and floor(barWidth / 10)
+  if not limit or limit < 1 or strlen(name) <= limit then return name end
+
+  local lines = {}
+  local line = ""
+
+  for word in string.gfind(name, "%S+") do
+    if line == "" then
+      line = word
+    elseif strlen(line) + 1 + strlen(word) <= limit then
+      line = line .. " " .. word
+    else
+      table.insert(lines, line)
+      line = word
+    end
+  end
+
+  if line ~= "" then
+    table.insert(lines, line)
+  end
+
+  if table.getn(lines) > 0 then
+    return table.concat(lines, "\n")
+  end
+
+  return name
+end
+
+function pfUI.uf:GetNameString(unitstr, unit)
+  local name = UnitName(unitstr)
+  local translatedName = pfUI.uf:GetWoWTranslateName(unitstr)
+  if translatedName then
+    return WrapNameString(translatedName, unit)
+  end
+
   local abbrev = pfUI_config.unitframes.abbrevname == "1" or nil
   local size = 20
 
@@ -3137,7 +3238,7 @@ function pfUI.uf:GetNameString(unitstr)
     name = string.gsub(name, "(%S+) ", abbrevname)
   end
 
-  return name
+  return WrapNameString(name, unit)
 end
 
 function pfUI.uf:GetLevelString(unitstr)
@@ -3181,17 +3282,17 @@ function pfUI.uf:GetStatusValue(unit, pos)
   end
 
   if config == "unit" then
-    local name = unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr)
+    local name = unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
     local level = unit:GetColor("level") .. pfUI.uf:GetLevelString(unitstr)
 
     return level .. "  " .. name
   elseif config == "unitrev" then
-    local name = unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr)
+    local name = unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
     local level = unit:GetColor("level") .. pfUI.uf:GetLevelString(unitstr)
 
     return name .. "  " .. level
   elseif config == "name" then
-    return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr)
+    return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
   elseif config == "nameshort" then
     return unit:GetColor("unit") .. strsub(UnitName(unitstr), 0, 3)
   elseif config == "level" then
@@ -3230,18 +3331,18 @@ function pfUI.uf:GetStatusValue(unit, pos)
     if UnitIsDead(unitstr) then
       return unit:GetColor("health") .. DEAD
     elseif health == 0 then
-      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr)
+      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
     else
       return unit:GetColor("health") .. pfUI.api.Abbreviate(health)
     end
   elseif config == "namehealthbreak" then
     local health = ceil(rhp - rhpmax)
     if UnitIsDead(unitstr) then
-      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr) .. "\n" .. unit:GetColor("health") .. DEAD
+      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit) .. "\n" .. unit:GetColor("health") .. DEAD
     elseif health == 0 then
-      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr)
+      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit)
     else
-      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr) .. "\n" .. unit:GetColor("health") .. pfUI.api.Abbreviate(-health)
+      return unit:GetColor("unit") .. pfUI.uf:GetNameString(unitstr, unit) .. "\n" .. unit:GetColor("health") .. pfUI.api.Abbreviate(-health)
     end
   elseif config == "shortnamehealth" then
     local health = ceil(rhp - rhpmax)

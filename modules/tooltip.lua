@@ -202,6 +202,18 @@ pfUI:RegisterModule("tooltip", "vanilla", function ()
       end
     end)
 
+  pfUI.tooltip:SetScript("OnUpdate", function()
+    if C.unitframes.translate_wowtranslate ~= "1" then return end
+    if not GameTooltip:IsShown() then return end
+    if (this.wowtranslateNext or 0) > GetTime() then return end
+
+    this.wowtranslateNext = GetTime() + .1
+
+    if pfUI.uf and pfUI.uf.CacheWoWTranslateTooltipName then
+      pfUI.uf:CacheWoWTranslateTooltipName(GameTooltip)
+    end
+  end)
+
   pfUI.tooltipStatusBar = CreateFrame('Frame', nil, GameTooltipStatusBar)
   pfUI.tooltipStatusBar:SetPoint("TOPLEFT", 0, 8)
   pfUI.tooltipStatusBar:SetPoint("TOPRIGHT", 0, 8)

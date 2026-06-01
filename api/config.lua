@@ -265,6 +265,7 @@ function pfUI:LoadConfig()
   pfUI:UpdateConfig("unitframes", nil,           "abbrevnum",        "1")
   pfUI:UpdateConfig("unitframes", nil,           "castbardecimals",  "2")
   pfUI:UpdateConfig("unitframes", nil,           "abbrevname",       "1")
+  pfUI:UpdateConfig("unitframes", nil,           "translate_wowtranslate", "0")
 
   -- Nampower Settings
   pfUI:UpdateConfig("unitframes", nil,           "spellqueue",       "1")
