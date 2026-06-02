@@ -54,6 +54,8 @@ pfUI:RegisterModule("addoncompat", function ()
   local queue_soft = {}
   local queue_hard = {}
   local queue_config = {}
+  local wowtranslate_addon
+  local wowtranslate_prompt = "wowtranslate_unitframes"
 
   local function IsWoWTranslateAddon(name, title)
     name = string.lower(tostring(name or ""))
@@ -62,6 +64,48 @@ pfUI:RegisterModule("addoncompat", function ()
     title = string.gsub(title, "[^%w]", "")
 
     return string.find(name, "wowtranslate") or string.find(title, "wowtranslate")
+  end
+
+  local function GetWoWTranslatePromptKey()
+    local name = UnitName("player")
+    if not name or name == "" then return nil end
+
+    return wowtranslate_prompt .. "_" .. tostring(name)
+  end
+
+  local function QueueWoWTranslatePrompt()
+    if not wowtranslate_addon then return true end
+
+    local key = GetWoWTranslatePromptKey()
+    if not key then return nil end
+
+    if not pfUI_init.addons[key]
+    and pfUI_config.unitframes
+    and pfUI_config.unitframes.disable ~= "1"
+    and pfUI_config.unitframes.translate_wowtranslate ~= "1" then
+      queue_config[key] = wowtranslate_addon
+    end
+
+    return true
+  end
+
+  local function EnableWoWTranslateUnitFrames()
+    pfUI_config.unitframes = pfUI_config.unitframes or {}
+    pfUI_config.unitframes.translate_wowtranslate = "1"
+
+    if pfUI.uf and pfUI.uf.frames then
+      for _, frame in pairs(pfUI.uf.frames) do
+        if frame and frame.UpdateConfig then
+          frame:UpdateConfig()
+        end
+
+        if frame and pfUI.uf.RefreshUnit then
+          pfUI.uf:RefreshUnit(frame, "base")
+        end
+      end
+    end
+
+    return pfUI_config.unitframes.translate_wowtranslate == "1"
   end
 
   -- scan through all addons
@@ -75,14 +119,10 @@ pfUI:RegisterModule("addoncompat", function ()
       if softconflict[name] and softconflict[name][1]() then
         queue_soft[name] = i
       end
+    end
 
-      if IsWoWTranslateAddon(name, title)
-      and not pfUI_init.addons["wowtranslate_unitframes"]
-      and pfUI_config.unitframes
-      and pfUI_config.unitframes.disable ~= "1"
-      and pfUI_config.unitframes.translate_wowtranslate ~= "1" then
-        queue_config["wowtranslate_unitframes"] = name
-      end
+    if enabled and IsWoWTranslateAddon(name, title) then
+      wowtranslate_addon = name
     end
   end
 
@@ -122,8 +162,9 @@ pfUI:RegisterModule("addoncompat", function ()
         {T["Yes"], function()
           queue_config[key] = nil
           pfUI_init.addons[key] = true
-          pfUI_config.unitframes.translate_wowtranslate = "1"
-          require_config_reload = true
+          if EnableWoWTranslateUnitFrames() then
+            require_config_reload = true
+          end
         end},
         {T["No"], function()
           queue_config[key] = nil
@@ -190,6 +231,8 @@ pfUI:RegisterModule("addoncompat", function ()
         if not pfUI_init[step.name] then return end
       end
     end
+
+    if not QueueWoWTranslatePrompt() then return end
 
     RunQueue()
     this:SetScript("OnUpdate", nil)
