@@ -50,8 +50,19 @@ pfUI:RegisterModule("addoncompat", function ()
   }
 
   local require_reload
+  local require_config_reload
   local queue_soft = {}
   local queue_hard = {}
+  local queue_config = {}
+
+  local function IsWoWTranslateAddon(name, title)
+    name = string.lower(tostring(name or ""))
+    title = string.lower(tostring(title or ""))
+    name = string.gsub(name, "[^%w]", "")
+    title = string.gsub(title, "[^%w]", "")
+
+    return string.find(name, "wowtranslate") or string.find(title, "wowtranslate")
+  end
 
   -- scan through all addons
   for i=1, GetNumAddOns() do
@@ -63,6 +74,14 @@ pfUI:RegisterModule("addoncompat", function ()
 
       if softconflict[name] and softconflict[name][1]() then
         queue_soft[name] = i
+      end
+
+      if IsWoWTranslateAddon(name, title)
+      and not pfUI_init.addons["wowtranslate_unitframes"]
+      and pfUI_config.unitframes
+      and pfUI_config.unitframes.disable ~= "1"
+      and pfUI_config.unitframes.translate_wowtranslate ~= "1" then
+        queue_config["wowtranslate_unitframes"] = name
       end
     end
   end
@@ -88,6 +107,27 @@ pfUI:RegisterModule("addoncompat", function ()
         end},
         {T["No"], function()
           queue_hard[name] = nil
+        end},
+        nil, RunQueue)
+      return
+    end
+
+    -- run through optional config prompts
+    local key, name = next(queue_config)
+    if key and name then
+      CreateQuestionDialog(
+        T["WoWTranslate was detected."] .. "\n"
+        .. "hover tooltip to translate unit frames" .. "\n"
+        .. T["Do you want to enable translated unit frames?"],
+        {T["Yes"], function()
+          queue_config[key] = nil
+          pfUI_init.addons[key] = true
+          pfUI_config.unitframes.translate_wowtranslate = "1"
+          require_config_reload = true
+        end},
+        {T["No"], function()
+          queue_config[key] = nil
+          pfUI_init.addons[key] = true
         end},
         nil, RunQueue)
       return
@@ -121,10 +161,15 @@ pfUI:RegisterModule("addoncompat", function ()
     end
 
     -- in case of changes, ask for reload
-    if require_reload then
+    if require_reload or require_config_reload then
+      local text = T["Some settings need to reload the UI to take effect.\nDo you want to reload now?"]
+      if require_reload then
+        text = T["The addon selection has changed."] .. "\n"
+        .. T["Do you want to reload the UI now?"]
+      end
+
       CreateQuestionDialog(
-        T["The addon selection has changed."] .. "\n"
-        .. T["Do you want to reload the UI now?"],
+        text,
         {T["Yes"], function()
           ReloadUI()
         end},
