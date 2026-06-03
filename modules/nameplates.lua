@@ -1193,7 +1193,9 @@ end
     end
 
     local translatedName = pfUI.uf and pfUI.uf.GetWoWTranslateNameByName and pfUI.uf:GetWoWTranslateNameByName(name)
-    plate.name:SetText(GetNameString(translatedName or name))
+    local displayName = GetNameString(translatedName or name)
+    if translatedName then displayName = displayName .. "|cffffff00*|r" end
+    plate.name:SetText(displayName)
     plate.level:SetText(string.format("%s%s", level, (elitestrings[elite] or "")))
     
     -- Set level color from GetDifficultyColor when using DB level

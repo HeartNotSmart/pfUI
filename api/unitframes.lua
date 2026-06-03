@@ -3125,6 +3125,7 @@ end
 
 local NAME_WRAP_MAX_LINES = 3
 local NAME_WRAP_MIN_FONT_SIZE = 8
+local WOWTRANSLATE_MARKER = "|cffffff00*|r"
 
 local function StripWoWTranslateNameText(text)
   if not text then return nil end
@@ -3302,7 +3303,8 @@ local function GetNameStringAndShrink(unitstr, unit)
   local name = UnitName(unitstr)
   local translatedName = pfUI.uf:GetWoWTranslateName(unitstr)
   if translatedName then
-    return WrapNameString(translatedName, unit)
+    local name, shrink = WrapNameString(translatedName, unit)
+    return name .. WOWTRANSLATE_MARKER, shrink
   end
 
   local abbrev = pfUI_config.unitframes.abbrevname == "1" or nil
