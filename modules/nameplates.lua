@@ -1192,7 +1192,8 @@ end
       plate.totem:Hide()
     end
 
-    plate.name:SetText(GetNameString(name))
+    local translatedName = pfUI.uf and pfUI.uf.GetWoWTranslateNameByName and pfUI.uf:GetWoWTranslateNameByName(name)
+    plate.name:SetText(GetNameString(translatedName or name))
     plate.level:SetText(string.format("%s%s", level, (elitestrings[elite] or "")))
     
     -- Set level color from GetDifficultyColor when using DB level
@@ -1409,6 +1410,24 @@ end
     for i = index, 16 do
       if plate.debuffs[i] then
         plate.debuffs[i]:Hide()
+      end
+    end
+  end
+
+  nameplates.RefreshWoWTranslateName = function(self, name)
+    if not name then return end
+
+    for frame in pairs(registry) do
+      local nameplate = frame.nameplate
+      local original = nameplate and nameplate.original
+      local rawName = nameplate and nameplate.cache and nameplate.cache.name
+
+      if not rawName and original and original.name then
+        rawName = original.name:GetText()
+      end
+
+      if rawName == name then
+        nameplate.eventcache = true
       end
     end
   end

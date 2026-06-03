@@ -3144,7 +3144,12 @@ function pfUI.uf:GetWoWTranslateName(unitstr)
   if not unitstr or C.unitframes.translate_wowtranslate ~= "1" then return nil end
 
   local name = UnitName(unitstr)
-  if not name or not pfUI.uf.wowtranslateNames then return nil end
+  return pfUI.uf:GetWoWTranslateNameByName(name)
+end
+
+function pfUI.uf:GetWoWTranslateNameByName(name)
+  if not name or C.unitframes.translate_wowtranslate ~= "1" then return nil end
+  if not pfUI.uf.wowtranslateNames then return nil end
 
   return pfUI.uf.wowtranslateNames[name]
 end
@@ -3159,6 +3164,10 @@ function pfUI.uf:RefreshWoWTranslateName(name)
         pfUI.uf:RefreshUnit(frame, "base")
       end
     end
+  end
+
+  if pfUI.nameplates and pfUI.nameplates.RefreshWoWTranslateName then
+    pfUI.nameplates:RefreshWoWTranslateName(name)
   end
 end
 
