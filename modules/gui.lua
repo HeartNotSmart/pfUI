@@ -1518,7 +1518,7 @@ pfUI:RegisterModule("gui", "vanilla:tbc", function ()
 
       CreateConfig(nil, T["Settings"], nil, nil, "header")
       CreateConfig(nil, T["Language"], C.global, "language", "dropdown", pfUI.gui.dropdowns.languages)
-      CreateConfig(nil, T["Use tooltip translation for Nameplates/Unitframes (WoWTranslate)"], C.unitframes, "translate_wowtranslate", "checkbox")
+      CreateConfig(nil, T["Use tooltip data for plates/frames (WoWTranslate)"], C.unitframes, "translate_wowtranslate", "checkbox")
       CreateConfig(U["pixelperfect"], T["Enable UI-Scale"], C.global, "pixelperfect", "dropdown", pfUI.gui.dropdowns.scaling)
       CreateConfig(nil, T["Use Original Game Fonts"], C.global, "font_blizzard", "checkbox")
       CreateConfig(nil, T["Enable Region Compatible Font"], C.global, "force_region", "checkbox")
